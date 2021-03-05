@@ -1,0 +1,2 @@
+curl -G https://www.strava.com/api/v3/athlete/activities?before=1609459200 \
+  -H "Authorization: Bearer 5acd0d144e9299743e6622e900196e7d545bc29e"

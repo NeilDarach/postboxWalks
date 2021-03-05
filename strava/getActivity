@@ -1,0 +1,15 @@
+#!/bin/sh 
+evttime=$(date +"%s" -d $2)
+evtid=$1
+curl -X POST https://huginn.darach.org.uk/users/1/web_requests/12/authstring -d "{
+  \"aspect_type\": \"create\",
+  \"event_time\": ${evttime},
+  \"object_id\": ${evtid},
+  \"object_type\": \"activity\",
+  \"owner_id\": 15488764,
+  \"subscription_id\": 183174,
+  \"updates\": {
+  },
+  \"headers\": {
+  }
+}"

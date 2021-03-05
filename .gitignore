@@ -1,0 +1,5 @@
+*.gpx
+*.gpx.json
+*.simplified.json
+*.raw.json
+.*.swp
