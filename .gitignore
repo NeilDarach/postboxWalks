@@ -1,5 +1,6 @@
 *.gpx
 *.gpx.json
 *.simplified.json
+*.merged.json
 *.raw.json
 .*.swp

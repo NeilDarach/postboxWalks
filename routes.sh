@@ -1,6 +1,6 @@
 style=${QUERY_STRING##*style=}
 if [[ "${style}" = "${QUERY_STRING}" ]] ; then
-  style="simplified"
+  style="merged"
 else
   style=${style%%&*}
 fi

@@ -1,4 +1,5 @@
 let map;
+let routes = {};
 let postboxes = [];
 let postboxesShown = true;
 
@@ -15,14 +16,24 @@ function getJSON(url, callback) {
     xhr.send();
     }
 
-function addWalks(url,walkProperties,map) {
+function showRoutes(key)
+ {
+ Object.keys(routes).forEach(function (hashkey) { 
+   routes[hashkey].forEach(function(line) {
+     line.setMap((hashkey==key)?map:null)
+     })
+ })
+ }
+
+function addWalks(url,key,show,walkProperties,map) {
+  routes[key] = [];
   getJSON(url,function(err,data) {
   if (err == null) {
    data.forEach((elem) => {
-     addLine(elem,walkProperties,map);
+     addLine(elem,key,show,walkProperties,map);
      });}})}
 
-function addLine(url,properties,map) {
+function addLine(url,key,show,properties,map) {
   getJSON(url,function(err,data) {
     if (err == null) {
       if ("points" in data) { points = data.points } else { points = data }
@@ -32,7 +43,10 @@ function addLine(url,properties,map) {
 	strokeColor: properties.strokeColor,
 	strokeOpacity: properties.strokeOpacity,
 	strokeWeight: properties.strokeWeight });
-      line.setMap(map) } }); }
+      routes[key].push(line);
+      if (show) {
+        line.setMap(map);
+	} } }); }
 
 function addShade(url,properties,map) {
   getJSON(url,function(err,data) {
@@ -182,7 +196,9 @@ function initMap() {
       					 radius: 5 });
   addShade("newlandsPark.json",parkProperties,map);
   addLine("g43.json", boundaryProperties, map);
-  addWalks("routes.sh",walkProperties,map);
+  addWalks("routes.sh?style=merged","merged",true,walkProperties,map);
+  addWalks("routes.sh?style=raw","raw",false,walkProperties,map);
+  addWalks("routes.sh?style=simplified","simplified",false,walkProperties,map);
   addMarkers("postboxes.json", svgMarkerVisited, svgParcelMarker, svgMarker, map);
       track = new google.maps.Polyline({
         path: [] ,
