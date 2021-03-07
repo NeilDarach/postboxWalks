@@ -40,7 +40,7 @@ function addWalks(url,key,show,walkProperties,map) {
 function addLine(url,key,show,properties,map,isLast) {
   getJSON(url,function(err,data) {
     if (err == null) {
-      if ("points" in data) { points = data.points } else { points = data }
+      if ("walk" in data) { points = data.walk.points } else { points = data }
       line = new google.maps.Polyline({
         path: points,
 	geodesic: true,

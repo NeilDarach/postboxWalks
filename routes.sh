@@ -15,7 +15,7 @@ if [[ "${style}" != "" ]] ; then
 fi
 
 comma=""
-for x in *.${style}.json ; do 
+for x in $(ls -1 *.${style}.json | sort) ; do 
   echo "${comma}\"${x}\""
   comma=","
 done
