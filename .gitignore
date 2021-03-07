@@ -1,6 +1,9 @@
 *.gpx
 *.gpx.json
 *.simplified.json
+*.snapped.json
 *.merged.json
 *.raw.json
 .*.swp
+postboxes.json
+strava

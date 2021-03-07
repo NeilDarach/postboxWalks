@@ -27,20 +27,24 @@ function showRoutes(key)
 
 function addWalks(url,key,show,walkProperties,map) {
   routes[key] = [];
+  var ctr = 0;
   getJSON(url,function(err,data) {
   if (err == null) {
    data.forEach((elem) => {
-     addLine(elem,key,show,walkProperties,map);
-     });}})}
+     ctr = ctr + 1
+     addLine(elem,key,show,walkProperties,map,(ctr==data.length));
+     });
+   }});
+  }
 
-function addLine(url,key,show,properties,map) {
+function addLine(url,key,show,properties,map,isLast) {
   getJSON(url,function(err,data) {
     if (err == null) {
       if ("points" in data) { points = data.points } else { points = data }
       line = new google.maps.Polyline({
         path: points,
 	geodesic: true,
-	strokeColor: properties.strokeColor,
+	strokeColor: (isLast?properties.lastStrokeColor:properties.strokeColor),
 	strokeOpacity: properties.strokeOpacity,
 	strokeWeight: properties.strokeWeight });
       routes[key].push(line);
@@ -87,6 +91,14 @@ function addTrack(dot,trackProperties,track,map) {
         (position) => { setPosition(position,dot,track,map) }, () => { }); 
 	}
 
+function setCenter() {
+    if (!navigator.geolocation) { return; }
+    navigator.geolocation.getCurrentPosition(
+      (position) => { const pos = { lat: position.coords.latitude,
+                lng: position.coords.longitude, };
+		map.setCenter(pos); });}
+
+
 function addMarkers(url,visited,parcel,notVisited,map) {
   getJSON(url,function(err, data) {
   if (err == null) {
@@ -100,9 +112,9 @@ function addMarkers(url,visited,parcel,notVisited,map) {
       postboxes.push(marker);
       marker.setMap(map);}) }});}
 
-function togglePostboxes() {
+function togglePostboxes(textId) {
   postboxesShown = !postboxesShown; 
-  document.getElementById("togglePostboxes").value = (postboxesShown?'Hide Postboxes':'Show Postboxes');
+  document.getElementById(textId).innerHtml = (postboxesShown?'Hide Postboxes':'Show Postboxes');
   for (let i = 0; i < postboxes.length; i++) {
     if (postboxesShown) {
     	postboxes[i].setMap(map);
@@ -136,7 +148,17 @@ function initMap() {
     styles: stylesArray
   });
 
+  // Create the DIV to hold the controls and call the controls 
+  // constructor passing in this DIV.
+  const buttonsDiv = document.createElement("div");
+  const buttonsControl = new ButtonsControl(buttonsDiv, map);
+  buttonsDiv.index = 1;
+  buttonsDiv.style.paddingTop = "10px";
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(buttonsDiv);
+
+
   const walkProperties = {   strokeColor: "#FF0000",
+  			     lastStrokeColor: "#FF00FF",
                              strokeOpacity: 1.0,
                              strokeWeight: 2 };
   const trackProperties = {   strokeColor: "#0000AA",
@@ -195,7 +217,7 @@ function initMap() {
       					 center: { lat: 0, lng: 0 },
       					 radius: 5 });
   addShade("newlandsPark.json",parkProperties,map);
-  addLine("g43.json", boundaryProperties, map);
+  addLine("g43.json", boundaryProperties, map, false);
   addWalks("routes.sh?style=merged","merged",true,walkProperties,map);
   addWalks("routes.sh?style=raw","raw",false,walkProperties,map);
   addWalks("routes.sh?style=simplified","simplified",false,walkProperties,map);
@@ -210,5 +232,33 @@ function initMap() {
   setInterval(function() { addTrack(dot,trackProperties,track,map) },5000);
   addTrack(dot,trackProperties,track,map);
  
+}
+
+
+class ButtonsControl {
+  constructor(controlDiv, map) {
+    this.map_ = map;
+    controlDiv.style.clear = "both";
+    controlDiv.appendChild(this.button("showHidePostboxes","Show Postboxes","Toggle the visibility of postboxes",() => { togglePostboxes("showHidePostboxesText")}));
+    controlDiv.appendChild(this.button("rawRoutes","Raw", "Show Raw Routes",() => { showRoutes("raw")}));
+    controlDiv.appendChild(this.button("simplifiedRoutes","Simplified", "Show Simplified Routes",() => { showRoutes("simplified")}));
+    controlDiv.appendChild(this.button("mergedRoutes","Merged", "Show Merged Routes",() => { showRoutes("merged")}));
+    controlDiv.appendChild(this.button("setCenter","Center", "Center the map",() => { setCenter()}));
+
+  }
+  button(id,text,hover,click) {
+    const div = document.createElement("div");
+    div.id = id;
+    div.classList.add("button");
+    div.title = hover;
+    
+    const buttonText = document.createElement("div");
+    buttonText.id = id + "Text";
+    buttonText.classList.add("buttonText");
+    buttonText.innerHTML = text;
+    div.appendChild(buttonText);
+    div.addEventListener("click", click);
+    return div }
+
 }
 
