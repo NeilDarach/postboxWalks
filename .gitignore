@@ -6,4 +6,4 @@
 *.raw.json
 .*.swp
 postboxes.json
-strava
+strava/*
