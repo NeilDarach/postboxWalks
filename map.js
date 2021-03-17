@@ -134,25 +134,19 @@ function setCenter() {
 		map.setCenter(pos); });}
 
 
-function addMarkers(url,visited,parcel,notVisited,map) {
+function addMarkers(url,map) {
   getJSON(url,function(err, data) {
   if (err == null) {
     data.forEach((elem) => {
-      const infowindow = new google.maps.InfoWindow({content: (elem.visited?(elem.name + "</br>" + elem.date + "</br>" + elem.who):(elem.name)) });
-      
-      const marker = new google.maps.Marker({
-                        position: {lat: elem.lat, lng: elem.lng},
-                        icon: (elem.visited?visited:(elem.parcel?parcel:notVisited)) });
-      marker.addListener("click",() => { infowindow.open(map,marker); });
-      postboxes.push(marker);
-      marker.setMap(map);}); }});}
+      postboxes.push(new Postbox(elem,map)); 
+      }); }});}
 
 function showPostboxes(show) {
   for (let i = 0; i < postboxes.length; i++) {
     if (show) {
-    	postboxes[i].setMap(map);
+    	postboxes[i].show();
     } else {
-        postboxes[i].setMap(null);
+        postboxes[i].hide();
     }
   }
   }
@@ -214,35 +208,6 @@ function initMap() {
                                 strokeWeight: 4,
      				fillColor: "#42b37c",
     				fillOpacity: 0.3 };
-  const svgMarkerVisited = {
-    path:
-      "M10.453 14.016l6.563-6.609-1.406-1.406-5.156 5.203-2.063-2.109-1.406 1.406zM12 2.016q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z",
-    fillColor: "green",
-    fillOpacity: 0.6,
-    strokeWeight: 0,
-    rotation: 0,
-    scale: 2,
-    anchor: new google.maps.Point(10, 25) };
-
-   const svgMarker = {
-    path:
-      "M10.453 14.016M12 2.016q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z",
-    fillColor: "red",
-    fillOpacity: 0.6,
-    strokeWeight: 0,
-    rotation: 0,
-    scale: 2,
-    anchor: new google.maps.Point(10, 25) };
-
-   const svgParcelMarker = {
-    path:
-      "M10.453 14.016M12 2.016q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z",
-    fillColor: "purple",
-    fillOpacity: 0.6,
-    strokeWeight: 0,
-    rotation: 0,
-    scale: 2,
-    anchor: new google.maps.Point(10, 25) };
 
     const dotProperties = {
       strokeColor: "#0000FF",
@@ -264,7 +229,7 @@ function initMap() {
   addWalks("routes.sh?style=merged","merged",walkProperties,map,walksMenu);
   addWalks("routes.sh?style=raw","raw",walkProperties,map,null);
   addWalks("routes.sh?style=simplified","simplified",walkProperties,map,null);
-  addMarkers("postboxes.json", svgMarkerVisited, svgParcelMarker, svgMarker, map);
+  addMarkers("postboxes.json", map);
   track = new google.maps.Polyline({
 	path: [] ,
 	geodesic: true,
