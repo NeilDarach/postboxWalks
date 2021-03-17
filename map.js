@@ -1,7 +1,9 @@
 let map;
 let routes = {};
+let routeKey = "merged";
 let postboxes = [];
 let postboxesShown = true;
+
 
 function getJSON(url, callback) {
     var xhr = new XMLHttpRequest();
@@ -18,40 +20,73 @@ function getJSON(url, callback) {
 
 function showRoutes(key)
  {
+ routeKey=key;
  Object.keys(routes).forEach(function (hashkey) { 
    routes[hashkey].forEach(function(line) {
-     line.setMap((hashkey==key)?map:null)
-     })
- })
+     line[1].setMap((hashkey==key)?map:null);
+     });
+ });
  }
 
-function addWalks(url,key,show,walkProperties,map) {
+function addWalks(url,key,walkProperties,map,menu) {
   routes[key] = [];
   var ctr = 0;
   getJSON(url,function(err,data) {
   if (err == null) {
    data.forEach((elem) => {
-     ctr = ctr + 1
-     addLine(elem,key,show,walkProperties,map,(ctr==data.length));
+     ctr = ctr + 1;
+     addLine(elem,key,(key==routeKey),walkProperties,map,menu,(ctr==data.length));
      });
    }});
   }
 
-function addLine(url,key,show,properties,map,isLast) {
+function addLine(url,key,show,properties,map,menu,isLast) {
   getJSON(url,function(err,data) {
     if (err == null) {
-      if ("walk" in data) { points = data.walk.points } else { points = data }
+      if ("walk" in data) 
+        { var points = data.walk.points; 
+          var name = data.walk.date;
+        } else { 
+          var points = data; 
+          var name = null;
+        }
       line = new google.maps.Polyline({
         path: points,
 	geodesic: true,
 	strokeColor: (isLast?properties.lastStrokeColor:properties.strokeColor),
 	strokeOpacity: properties.strokeOpacity,
 	strokeWeight: properties.strokeWeight });
-      routes[key].push(line);
-      if (show) {
-        line.setMap(map);
-	} } }); }
+      if (key in routes) { 
+        if (menu != null) { 
+           var subm = data.walk.date.substr(0,7);
+           menu.addMenuItem(name,()=>{ toggleTrack(name) },menu.addSubMenu(subm,subm)); 
+        }
+        routes[key].push([name,line]); 
+        }
+      if (show==true) { 
+line.setMap(map); 
+}
+	 } }); }
 
+function showTracks() {
+  for(i=0;i<routes[routeKey].length;i++) {
+     routes[routeKey][i][1].setMap(map);
+  } 
+}
+
+function hideTracks() {
+  for(i=0;i<routes[routeKey].length;i++) {
+     routes[routeKey][i][1].setMap(null);
+  } }
+
+function toggleTrack(name) {
+  for(i=0;i<routes[routeKey].length;i++) {
+       if (routes[routeKey][i][0]==name) {
+             routes[routeKey][i][1].setMap((routes[routeKey][i][1].getMap() == null)?map:null);
+    }
+  }
+}
+    
 function addShade(url,properties,map) {
   getJSON(url,function(err,data) {
     if (err == null) {
@@ -63,7 +98,7 @@ function addShade(url,properties,map) {
 	strokeWeight: properties.strokeWeight,
 	fillColor: properties.fillColor,
 	fillOpacity: properties.fillOpacity });
-      shade.setMap(map) } }); }
+      shade.setMap(map); } }); }
 
 function distance(p1,p2) { 
   dist = Math.sqrt(Math.pow((p1.lat - p2.lat),2) + Math.pow((p1.lng - p2.lng),2));
@@ -88,7 +123,7 @@ function setPosition(position,dot,track,map)
 function addTrack(dot,trackProperties,track,map) {
     if (!navigator.geolocation) { return; }
     navigator.geolocation.getCurrentPosition(
-        (position) => { setPosition(position,dot,track,map) }, () => { }); 
+        (position) => { setPosition(position,dot,track,map); }, () => { }); 
 	}
 
 function setCenter() {
@@ -110,13 +145,11 @@ function addMarkers(url,visited,parcel,notVisited,map) {
                         icon: (elem.visited?visited:(elem.parcel?parcel:notVisited)) });
       marker.addListener("click",() => { infowindow.open(map,marker); });
       postboxes.push(marker);
-      marker.setMap(map);}) }});}
+      marker.setMap(map);}); }});}
 
-function togglePostboxes(textId) {
-  postboxesShown = !postboxesShown; 
-  document.getElementById(textId).innerHtml = (postboxesShown?'Hide Postboxes':'Show Postboxes');
+function showPostboxes(show) {
   for (let i = 0; i < postboxes.length; i++) {
-    if (postboxesShown) {
+    if (show) {
     	postboxes[i].setMap(map);
     } else {
         postboxes[i].setMap(null);
@@ -150,11 +183,20 @@ function initMap() {
 
   // Create the DIV to hold the controls and call the controls 
   // constructor passing in this DIV.
-  const buttonsDiv = document.createElement("div");
-  const buttonsControl = new ButtonsControl(buttonsDiv, map);
-  buttonsDiv.index = 1;
-  buttonsDiv.style.paddingTop = "10px";
-  map.controls[google.maps.ControlPosition.TOP_CENTER].push(buttonsDiv);
+  const trackMenu = new MenuControl("tracks");
+  trackMenu.addDropdown("Tracks");
+  trackMenu.addCheckbox("Show Postboxes",true,showPostboxes);
+  trackMenu.addRadio("tracks","Raw",false, () => { showRoutes("raw"); });
+  trackMenu.addRadio("tracks","Simplified",false, () => { showRoutes("simplified"); });
+  trackMenu.addRadio("tracks","Merged",true, () => { showRoutes("merged"); });
+  map.controls[google.maps.ControlPosition.TOP_RIGHT].push(trackMenu.div);
+
+  const walksMenu = new MenuControl("walks");
+  walksMenu.addDropdown("Walks");
+  walksMenu.addMenuItem("All", ()=>{ showTracks() });
+  walksMenu.addMenuItem("None", ()=>{ hideTracks() });
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(walksMenu.div);
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(button("Center",setCenter));
 
 
   const walkProperties = {   strokeColor: "#FF0000",
@@ -217,48 +259,29 @@ function initMap() {
       					 center: { lat: 0, lng: 0 },
       					 radius: 5 });
   addShade("newlandsPark.json",parkProperties,map);
-  addLine("g43.json", boundaryProperties, map, false);
-  addWalks("routes.sh?style=merged","merged",true,walkProperties,map);
-  addWalks("routes.sh?style=raw","raw",false,walkProperties,map);
-  addWalks("routes.sh?style=simplified","simplified",false,walkProperties,map);
+  // Postcode polygons from https://github.com/missinglink/uk-postcode-polygons
+  addLine("g43.json", "postcode", true, boundaryProperties, map, null, false);
+  addWalks("routes.sh?style=merged","merged",walkProperties,map,walksMenu);
+  addWalks("routes.sh?style=raw","raw",walkProperties,map,null);
+  addWalks("routes.sh?style=simplified","simplified",walkProperties,map,null);
   addMarkers("postboxes.json", svgMarkerVisited, svgParcelMarker, svgMarker, map);
-      track = new google.maps.Polyline({
-        path: [] ,
+  track = new google.maps.Polyline({
+	path: [] ,
 	geodesic: true,
 	strokeColor: "#0000AA",
 	strokeOpacity: 0.5,
 	strokeWeight: 8.0 });
       track.setMap(map); 
-  setInterval(function() { addTrack(dot,trackProperties,track,map) },5000);
-  addTrack(dot,trackProperties,track,map);
- 
-}
+	  setInterval(function() { addTrack(dot,trackProperties,track,map) },5000);
+	  addTrack(dot,trackProperties,track,map);
+	 
+	}
 
+function button(text,action) {
 
-class ButtonsControl {
-  constructor(controlDiv, map) {
-    this.map_ = map;
-    controlDiv.style.clear = "both";
-    controlDiv.appendChild(this.button("showHidePostboxes","Show Postboxes","Toggle the visibility of postboxes",() => { togglePostboxes("showHidePostboxesText")}));
-    controlDiv.appendChild(this.button("rawRoutes","Raw", "Show Raw Routes",() => { showRoutes("raw")}));
-    controlDiv.appendChild(this.button("simplifiedRoutes","Simplified", "Show Simplified Routes",() => { showRoutes("simplified")}));
-    controlDiv.appendChild(this.button("mergedRoutes","Merged", "Show Merged Routes",() => { showRoutes("merged")}));
-    controlDiv.appendChild(this.button("setCenter","Center", "Center the map",() => { setCenter()}));
-
-  }
-  button(id,text,hover,click) {
-    const div = document.createElement("div");
-    div.id = id;
-    div.classList.add("button");
-    div.title = hover;
-    
-    const buttonText = document.createElement("div");
-    buttonText.id = id + "Text";
-    buttonText.classList.add("buttonText");
-    buttonText.innerHTML = text;
-    div.appendChild(buttonText);
-    div.addEventListener("click", click);
-    return div }
-
-}
-
+    var div = document.createElement("div");
+    div.classList.add("menuDropdown");
+    div.innerHTML = text;
+    div.addEventListener("click",action)
+    return div;
+    }

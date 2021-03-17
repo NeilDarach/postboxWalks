@@ -15,4 +15,5 @@ curl -X POST https://huginn.darach.org.uk/users/1/web_requests/12/authstring -d 
 
 
 Get a JSON list of postboxes
-https://www.royalmail.com/capi/rml/bf/v1/locations/branchFinder?postCode=G43 2YL&searchRadius=40&&appliedFilters=null&officeType=postboxes&type=2
+https://www.royalmail.com/capi/rml/bf/v1/locations/branchFinder?postCode=G41%203AX&latitude=55.827102&longitude=-4.275230&officeType=postboxes&type=2
+
