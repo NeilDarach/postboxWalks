@@ -10,12 +10,9 @@ Content-Type: application/json
 
 EOM
 echo "["
-if [[ "${style}" != "" ]] ; then
-  style = "simplified"
-fi
 
 comma=""
-for x in $(ls -1 *.${style}.json | sort) ; do 
+for x in $(ls -1 tracks/${style}/*.${style}.json | sort) ; do 
   echo "${comma}\"${x}\""
   comma=","
 done

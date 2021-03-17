@@ -4,4 +4,6 @@ Content-Type: text/plain
 
 EOM
 
-cat  > /opt/share/www/walks/${QUERY_STRING##*=}
+TYPE=${QUERY_STRING%%.json}
+TYPE=${TYPE##*.}
+cat  > /opt/share/www/walks/tracks/${TYPE}/${QUERY_STRING##*=}
