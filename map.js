@@ -182,6 +182,7 @@ function initMap() {
   trackMenu.addCheckbox("Show Postboxes",true,showPostboxes);
   trackMenu.addRadio("tracks","Raw",false, () => { showRoutes("raw"); });
   trackMenu.addRadio("tracks","Simplified",false, () => { showRoutes("simplified"); });
+  trackMenu.addRadio("tracks","Snapped",true, () => { showRoutes("snapped"); });
   trackMenu.addRadio("tracks","Merged",true, () => { showRoutes("merged"); });
   map.controls[google.maps.ControlPosition.TOP_RIGHT].push(trackMenu.div);
 
@@ -190,7 +191,7 @@ function initMap() {
   walksMenu.addMenuItem("All", ()=>{ showTracks() });
   walksMenu.addMenuItem("None", ()=>{ hideTracks() });
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(walksMenu.div);
-  map.controls[google.maps.ControlPosition.TOP_CENTER].push(button("Center",setCenter));
+  map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(button("Center",setCenter));
 
 
   const walkProperties = {   strokeColor: "#FF0000",
@@ -229,6 +230,7 @@ function initMap() {
   addWalks("routes.sh?style=merged","merged",walkProperties,map,walksMenu);
   addWalks("routes.sh?style=raw","raw",walkProperties,map,null);
   addWalks("routes.sh?style=simplified","simplified",walkProperties,map,null);
+  addWalks("routes.sh?style=snapped","snapped",walkProperties,map,null);
   addMarkers("postboxes.json", map);
   track = new google.maps.Polyline({
 	path: [] ,
@@ -245,8 +247,11 @@ function initMap() {
 function button(text,action) {
 
     var div = document.createElement("div");
-    div.classList.add("menuDropdown");
-    div.innerHTML = text;
-    div.addEventListener("click",action)
+    div.classList.add("menuContainer");
+    var div2 = document.createElement("div");
+    div2.classList.add("menuDropdown");
+    div2.innerHTML = text;
+    div2.addEventListener("click",action)
+    div.appendChild(div2);
     return div;
     }
