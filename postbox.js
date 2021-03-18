@@ -44,17 +44,12 @@ class Postbox {
     this.marker.setMap(null);
   }
 
-  static infoWindow = null;
   static getInfoWindow() {
     if (this.infoWindow == null) {
       this.infoWindow =   new google.maps.InfoWindow() ;
     }
     return this.infoWindow;
   }
-
-  static svgMarkerVisited;
-  static svgMarkerUnvisited;
-  static svgMarkerParcel;
 
   static createSvg() {
     if (this.svgMarkerVisited != null) { return null; }
